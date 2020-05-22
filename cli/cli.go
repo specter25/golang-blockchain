@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/specter25/golang-blockchain/blockchain"
+	"github.com/specter25/golang-blockchain/wallet"
 )
 
 type CommandLine struct {
@@ -20,6 +21,8 @@ func (cli *CommandLine) printUsage() {
 	fmt.Println("createBlockchain - adress ADDRESS create a blockchain and this address mines it's genesis block")
 	fmt.Println("printchain - Prints the blocks in the chain")
 	fmt.Println("send -from FROM -to TO -amount AMOUNT -Send amount")
+	fmt.Println("listaddresses -- lists the addresses in our wallet file")
+	fmt.Println("createwallet -Creates a new Wallet")
 
 }
 func (cli *CommandLine) validateArgs() {
@@ -47,6 +50,7 @@ func (cli *CommandLine) createBlockchain(address string) {
 	chain.Database.Close()
 	fmt.Println("finished")
 }
+
 func (cli *CommandLine) getBalance(address string) {
 	chain := blockchain.ContinueBlockchain("")
 	defer chain.Database.Close() // only executes if there is proper completion of the program
@@ -66,12 +70,31 @@ func (cli *CommandLine) send(from, to string, amount int) {
 	fmt.Printf("Success")
 
 }
+func (cli *CommandLine) listAddresses() {
+
+	wallets, _ := wallet.CreateWallets()
+	addresses := wallets.GetAllAddresses()
+
+	for _, address := range addresses {
+		fmt.Println(address)
+	}
+}
+func (cli *CommandLine) createWallet() {
+
+	wallets, _ := wallet.CreateWallets()
+	address := wallets.AddWallet()
+	wallets.SaveFile()
+
+	fmt.Printf("New Address is :%s\n", address)
+}
 func (cli *CommandLine) Run() {
 	cli.validateArgs()
 	getBalanceCmd := flag.NewFlagSet("getbalance", flag.ExitOnError)
 	printChainCmd := flag.NewFlagSet("printchain", flag.ExitOnError)
 	sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
 	createBlockchainCmd := flag.NewFlagSet("createblockchain", flag.ExitOnError)
+	createWalletCmd := flag.NewFlagSet("createwallet", flag.ExitOnError)
+	listAddressesCmd := flag.NewFlagSet("listaddresses", flag.ExitOnError)
 
 	getBalanceAddress := getBalanceCmd.String("address", "", "address of the wallet")
 	createBlockchainAddress := createBlockchainCmd.String("address", "", "address of the miner")
@@ -100,6 +123,16 @@ func (cli *CommandLine) Run() {
 		if err != nil {
 			log.Panic(err)
 		}
+	case "createwallet":
+		err := createWalletCmd.Parse(os.Args[2:])
+		if err != nil {
+			log.Panic(err)
+		}
+	case "listaddresses":
+		err := listAddressesCmd.Parse(os.Args[2:])
+		if err != nil {
+			log.Panic(err)
+		}
 	default:
 		cli.printUsage()
 		runtime.Goexit()
@@ -122,6 +155,12 @@ func (cli *CommandLine) Run() {
 
 	if printChainCmd.Parsed() {
 		cli.printChain()
+	}
+	if createWalletCmd.Parsed() {
+		cli.createWallet()
+	}
+	if listAddressesCmd.Parsed() {
+		cli.listAddresses()
 	}
 
 	if sendCmd.Parsed() {

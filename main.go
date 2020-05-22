@@ -11,5 +11,4 @@ func main() {
 
 	cmd := cli.CommandLine{}
 	cmd.Run()
-
 }
