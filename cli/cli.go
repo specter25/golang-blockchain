@@ -63,8 +63,13 @@ func (cli *CommandLine) printChain() {
 	}
 }
 func (cli *CommandLine) createBlockchain(address string) {
+	if !wallet.ValidateAddress(address) {
+		log.Panic("Address is not Valid")
+	}
 	chain := blockchain.InitBlockchain(address)
 	chain.Database.Close()
+	UTXOSet := blockchain.UTXOSet{chain}
+	UTXOSet.Reindex()
 	fmt.Println("finished")
 }
 
@@ -97,7 +102,8 @@ func (cli *CommandLine) send(from, to string, amount int) {
 	UTXOSet := blockchain.UTXOSet{chain}
 	defer chain.Database.Close()
 	tx := blockchain.NewTransaction(from, to, amount, &UTXOSet)
-	block := chain.AddBlock([]*blockchain.Transaction{tx})
+	cbTx := blockchain.CoinbaseTx(from, "")
+	block := chain.AddBlock([]*blockchain.Transaction{cbTx, tx})
 	UTXOSet.Update(block)
 	fmt.Println("Success!")
 
