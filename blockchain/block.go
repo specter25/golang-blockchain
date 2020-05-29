@@ -4,17 +4,20 @@ import (
 	"bytes"
 	"encoding/gob"
 	"log"
+	"time"
 )
 
 type Block struct {
+	Timestamp    int64
 	Hash         []byte
 	Transactions []*Transaction
 	PrevHash     []byte
 	Nonce        int
+	Height       int
 }
 
-func CreateBlock(txn []*Transaction, prevHash []byte) *Block {
-	block := &Block{[]byte{}, txn, prevHash, 0} // a call to the Block constructor
+func CreateBlock(txn []*Transaction, prevHash []byte, height int) *Block {
+	block := &Block{time.Now().Unix(), []byte{}, txn, prevHash, 0, height} // a call to the Block constructor
 	//the data field converted into a slice of bytes
 	pow := Newproof(block)
 	nonce, hash := pow.Run()
@@ -24,7 +27,7 @@ func CreateBlock(txn []*Transaction, prevHash []byte) *Block {
 }
 
 func Genesis(coinbase *Transaction) *Block {
-	return CreateBlock([]*Transaction{coinbase}, []byte{})
+	return CreateBlock([]*Transaction{coinbase}, []byte{}, 0)
 }
 
 //database working -- give us the byte representation of the block
